@@ -1,0 +1,5 @@
+{
+  "name": "Projeto Gênesis: IA Revisora de Código & Planejadora",
+  "description": "Uma ferramenta avançada movida por IA que atua tanto como um planejador de projetos, gerando passos detalhados de desenvolvimento a partir de objetivos de alto nível, quanto como um revisor de código meticuloso, fornecendo feedback perspicaz usando a API Google Gemini.",
+  "requestFramePermissions": []
+}

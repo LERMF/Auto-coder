@@ -1,0 +1,153 @@
+<main class="bg-gray-900 text-gray-100 min-h-screen font-sans p-4 sm:p-6 lg:p-8">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <header class="text-center mb-8 relative">
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-300">
+        Projeto Gênesis
+      </h1>
+      <p class="text-gray-400 mt-2 text-lg">Desenvolvedor & Revisor de Código com IA</p>
+      <button (click)="newSession()" class="absolute top-0 right-0 mt-2 px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-500 transition-colors duration-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400">
+        Nova Sessão
+      </button>
+    </header>
+
+    <!-- Mode Selector -->
+    <div class="flex justify-center mb-8 bg-gray-800 p-1 rounded-lg max-w-sm mx-auto">
+      <button 
+        (click)="setMode('develop')"
+        [class]="isDevelopMode() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+        class="w-1/2 py-2 px-4 rounded-md font-semibold transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Desenvolver Projeto
+      </button>
+      <button 
+        (click)="setMode('review')"
+        [class]="!isDevelopMode() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+        class="w-1/2 py-2 px-4 rounded-md font-semibold transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Revisar Código
+      </button>
+    </div>
+
+    <!-- Input Section -->
+    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl mb-8">
+      @if (isDevelopMode()) {
+        <label for="goal" class="block text-lg font-semibold text-gray-200 mb-2">Objetivo do Projeto</label>
+        <textarea id="goal" [(ngModel)]="goal"
+          class="w-full h-28 p-4 bg-gray-900 border border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-gray-100 placeholder-gray-500"
+          placeholder="Ex: Crie um web scraper em Python para extrair notícias do Hacker News e salvar em um arquivo."></textarea>
+      } @else {
+        <label for="codeToReview" class="block text-lg font-semibold text-gray-200 mb-2">Código para Revisão</label>
+        <textarea id="codeToReview" [(ngModel)]="codeToReview"
+          class="w-full h-60 p-4 bg-gray-900 border border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow text-gray-100 placeholder-gray-500 font-mono text-sm"
+          placeholder="Cole seu trecho de código aqui..."></textarea>
+      }
+
+      <div class="mt-4 text-right">
+        <button (click)="startProject()" [disabled]="isProcessing()"
+          class="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-opacity-50">
+          @if (isProcessing()) {
+            <div class="flex items-center justify-center">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Processando...</span>
+            </div>
+          } @else {
+            <span>{{ isDevelopMode() ? 'Gerar Plano' : 'Iniciar Revisão' }}</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+      <div class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg relative mb-6" role="alert">
+        <strong class="font-bold">Erro: </strong>
+        <span class="block sm:inline">{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- Output Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Left Column: Plan / Review -->
+      <div class="bg-gray-800 p-6 rounded-xl shadow-2xl">
+        @if (isDevelopMode()) {
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-100">Plano de Execução</h2>
+            <button (click)="executePlan()" [disabled]="executionStatus() !== 'idle' || plan().length === 0"
+              class="px-6 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-500 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-teal-400">
+              Executar Plano
+            </button>
+          </div>
+          
+          @if (plan().length > 0) {
+            <div class="space-y-4">
+              @for (step of plan(); track step.step_id) {
+                <div class="bg-gray-900 p-4 rounded-lg border-l-4 transition-all duration-500"
+                     [class]="step.status === 'success' ? 'border-green-500' : step.status === 'running' ? 'border-yellow-500' : 'border-gray-600'">
+                  <div class="flex items-start space-x-4">
+                    <!-- Status Icon -->
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center"
+                         [class]="step.status === 'success' ? 'bg-green-500' : step.status === 'running' ? 'bg-yellow-500' : 'bg-gray-700'">
+                      @if (step.status === 'success') {
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                      } @else if (step.status === 'running') {
+                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      } @else {
+                        <span class="font-bold text-gray-300">{{ step.step_id }}</span>
+                      }
+                    </div>
+                    <!-- Step Details -->
+                    <div class="flex-grow">
+                      <p class="font-semibold text-gray-200">{{ step.description }}</p>
+                      <p class="text-sm text-gray-400 font-mono mt-1 bg-gray-800 p-2 rounded">
+                        <span class="text-teal-400">{{ step.type }}: </span>{{ step.command }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+             <div class="text-center text-gray-500 pt-16">
+              <p>O plano de execução gerado pela IA aparecerá aqui.</p>
+            </div>
+          }
+        } @else {
+          <h2 class="text-2xl font-bold text-gray-100 mb-4">Feedback da Revisão</h2>
+          @if (reviewResult()) {
+            <div class="prose prose-invert max-w-none text-gray-300" [innerHTML]="reviewResult()"></div>
+          } @else {
+            <div class="text-center text-gray-500 pt-16">
+              <p>O feedback da revisão de código aparecerá aqui.</p>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Right Column: Consciousness Log -->
+      <div class="bg-gray-800 p-6 rounded-xl shadow-2xl min-h-[300px] flex flex-col">
+        <h2 class="text-2xl font-bold text-gray-100 mb-4 flex-shrink-0">Log de Consciência</h2>
+        <div class="bg-gray-900 p-4 rounded-md h-full flex-grow overflow-y-auto">
+          @if (executionLog().length > 0) {
+            <div class="text-gray-300 font-mono text-sm space-y-2">
+              @for (line of executionLog(); track $index) {
+                <p>
+                  <span class="text-green-400 mr-2">&gt;</span>{{ line }}
+                </p>
+              }
+            </div>
+          } @else {
+            <div class="text-center text-gray-500 pt-16">
+              <p>Logs de execução e pensamentos da IA aparecerão aqui.</p>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
